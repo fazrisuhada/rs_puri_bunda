@@ -1,27 +1,27 @@
 <template>
   <div
-    class="min-h-screen bg-gradient-to-br bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4 rounded-2xl">
+    class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-800 dark:to-gray-900 flex items-center justify-center p-4 rounded-2xl">
     <div class="max-w-6xl w-full">
       <!-- Header -->
       <div class="text-center mb-8">
-        <h1 class="text-4xl font-bold text-white mb-2">Display Antrian</h1>
-        <p class="text-blue-200">Informasi Antrian yang Sedang Dipanggil</p>
+        <h1 class="text-4xl font-bold text-gray-800 dark:text-white mb-2">Display Antrian</h1>
+        <p class="text-gray-600 dark:text-blue-200">Informasi Antrian yang Sedang Dipanggil</p>
       </div>
 
       <!-- Loading State -->
       <div v-if="isLoading" class="text-center">
-        <div class="animate-spin rounded-full h-16 w-16 border-4 border-white border-t-transparent mx-auto mb-4"></div>
-        <p class="text-white text-lg">Memuat data...</p>
+        <div class="animate-spin rounded-full h-16 w-16 border-4 border-gray-300 dark:border-white border-t-transparent mx-auto mb-4"></div>
+        <p class="text-gray-700 dark:text-white text-lg">Memuat data...</p>
       </div>
 
       <!-- Display Antrian yang Sedang Dipanggil -->
       <div v-else-if="antrianDipanggil.length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div v-for="antrian in antrianDipanggil" :key="antrian.antrian_id"
-          class="bg-white rounded-3xl shadow-2xl p-8 transform hover:scale-105 transition-all duration-300">
+          class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-8 transform hover:scale-105 transition-all duration-300 border border-gray-200 dark:border-gray-700">
           <div class="flex items-center justify-between">
             <!-- Nomor Antrian -->
             <div class="text-center">
-              <p class="text-gray-600 text-lg mb-2">Nomor Antrian</p>
+              <p class="text-gray-600 dark:text-gray-300 text-lg mb-2">Nomor Antrian</p>
               <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-2xl px-8 py-4">
                 <span class="text-5xl font-bold">{{ antrian.nomor_antrian }}</span>
               </div>
@@ -29,45 +29,45 @@
 
             <!-- Jenis Antrian -->
             <div class="text-center">
-              <p class="text-gray-600 text-lg mb-2">Jenis Antrian</p>
+              <p class="text-gray-600 dark:text-gray-300 text-lg mb-2">Jenis Antrian</p>
               <div class="flex flex-col items-center">
                 <div class="w-20 h-20 rounded-full flex items-center justify-center text-white text-2xl font-bold mb-2"
                   :class="getJenisAntrianClass(antrian.jenis_antrian)">
                   {{ getJenisAntrianLabel(antrian.jenis_antrian) }}
                 </div>
-                <span class="text-gray-700 font-semibold capitalize">{{ antrian.jenis_antrian }}</span>
+                <span class="text-gray-700 dark:text-gray-200 font-semibold capitalize">{{ antrian.jenis_antrian }}</span>
               </div>
             </div>
 
             <!-- Staff/Loket -->
             <div class="text-center">
-              <p class="text-gray-600 text-lg mb-2">Petugas</p>
-              <div class="bg-gray-100 rounded-2xl px-6 py-4">
+              <p class="text-gray-600 dark:text-gray-300 text-lg mb-2">Petugas</p>
+              <div class="bg-gray-100 dark:bg-gray-700 rounded-2xl px-6 py-4">
                 <div class="flex items-center justify-center mb-2">
                   <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
                     <i class="pi pi-user text-white text-xl"></i>
                   </div>
                 </div>
-                <p class="text-gray-800 font-semibold">{{ getStaffName(antrian) }}</p>
-                <p class="text-gray-600 text-sm">{{ antrian.loket_name || 'Loket Pendaftaran' }}</p>
+                <p class="text-gray-800 dark:text-gray-100 font-semibold">{{ getStaffName(antrian) }}</p>
+                <p class="text-gray-600 dark:text-gray-300 text-sm">{{ antrian.loket_name || 'Loket Pendaftaran' }}</p>
               </div>
             </div>
           </div>
 
           <!-- Waktu Dipanggil -->
           <div class="mt-6 text-center">
-            <p class="text-gray-500 text-sm">Dipanggil pada: {{ formatDateTime(antrian.waktu_dipanggil) }}</p>
+            <p class="text-gray-500 dark:text-gray-400 text-sm">Dipanggil pada: {{ formatDateTime(antrian.waktu_dipanggil) }}</p>
           </div>
         </div>
       </div>
 
       <!-- Empty State -->
       <div v-else class="text-center py-16">
-        <div class="w-32 h-32 mx-auto mb-6 bg-white/20 rounded-full flex items-center justify-center">
-          <i class="pi pi-clock text-white text-6xl"></i>
+        <div class="w-32 h-32 mx-auto mb-6 bg-white/20 dark:bg-white/20 rounded-full flex items-center justify-center">
+          <i class="pi pi-clock text-gray-400 dark:text-white text-6xl"></i>
         </div>
-        <h3 class="text-2xl font-bold text-white mb-2">Tidak Ada Antrian yang Dipanggil</h3>
-        <p class="text-blue-200">Menunggu antrian selanjutnya...</p>
+        <h3 class="text-2xl font-bold text-gray-800 dark:text-white mb-2">Tidak Ada Antrian yang Dipanggil</h3>
+        <p class="text-gray-600 dark:text-blue-200">Menunggu antrian selanjutnya...</p>
       </div>
     </div>
   </div>
