@@ -195,10 +195,8 @@ export const useAuthenticationStore = defineStore('auth', () => {
             if (userString && userString !== 'undefined' && userString !== 'null') {
                 const userData = JSON.parse(userString);
                 currentUser.value = userData;
-                console.log('User loaded from localStorage:', userData);
             } else {
                 currentUser.value = null;
-                console.log('No user found in localStorage');
             }
         } catch (error) {
             currentUser.value = null;
