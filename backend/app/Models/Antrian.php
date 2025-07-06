@@ -63,56 +63,48 @@ class Antrian extends Model
     {
         $tanggal = $tanggal ?? now()->format('Y-m-d');
 
-        // Ambil antrian yang waiting untuk hari ini berdasarkan waktu kedatangan
-        $reservasis = self::where('jenis_antrian', 'reservasi')
-            ->whereIn('antrian_status_id', [1, 2]) // waiting dan called
+        // Ambil semua antrian hari ini yang statusnya menunggu/dipanggil
+        $all = self::whereIn('antrian_status_id', [1, 2])
             ->whereDate('tanggal_waktu', $tanggal)
             ->orderBy('tanggal_waktu', 'asc')
             ->get();
 
-        $walkins = self::where('jenis_antrian', 'walk-in')
-            ->whereIn('antrian_status_id', [1, 2]) // waiting dan called
-            ->whereDate('tanggal_waktu', $tanggal)
-            ->orderBy('tanggal_waktu', 'asc')
-            ->get();
+        $callOrder = collect();
+        // $reservasiCount = 0;
 
-        $callOrder = [];
-        $resIndex = 0;
+        // Cek jenis antrian pertama hari ini
+        $first = $all->first();
+        $startWithWalkin = $first && $first->jenis_antrian === 'walk-in';
+
+        // Jika mulai dari walk-in, panggil dahulu
+        $walkinQueue = $all->filter(fn($a) => $a->jenis_antrian === 'walk-in')->values();
+        $reservasiQueue = $all->filter(fn($a) => $a->jenis_antrian === 'reservasi')->values();
+
         $walkIndex = 0;
-        $reservasiCount = 0; // Counter untuk melacak berapa reservasi berturut-turut yang sudah dipanggil
+        $resIndex = 0;
 
-        // loop sampai semua antrian selesai
-        while ($resIndex < $reservasis->count() || $walkIndex < $walkins->count()) {
-            // Jika sudah 2 reservasi berturut-turut, wajib panggil walk-in (jika ada)
-            if ($reservasiCount >= 2 && $walkIndex < $walkins->count()) {
-                $callOrder[] = $walkins[$walkIndex];
-                $walkIndex++;
-                $reservasiCount = 0; // Reset counter setelah walk-in
-            }
-            // Jika belum 2 reservasi berturut-turut, prioritaskan reservasi (jika ada)
-            elseif ($reservasiCount < 2 && $resIndex < $reservasis->count()) {
-                $callOrder[] = $reservasis[$resIndex];
+        // Jika antrian pertama adalah walk-in, panggil dahulu
+        if ($startWithWalkin && $walkIndex < $walkinQueue->count()) {
+            $callOrder->push($walkinQueue[$walkIndex]);
+            $walkIndex++;
+        }
+
+        // Mulai skema 2R : 1W
+        while ($resIndex < $reservasiQueue->count() || $walkIndex < $walkinQueue->count()) {
+            // Panggil 2 reservasi (jika ada)
+            for ($i = 0; $i < 2 && $resIndex < $reservasiQueue->count(); $i++) {
+                $callOrder->push($reservasiQueue[$resIndex]);
                 $resIndex++;
-                $reservasiCount++;
             }
-            // Jika tidak ada reservasi lagi, panggil walk-in
-            elseif ($walkIndex < $walkins->count()) {
-                $callOrder[] = $walkins[$walkIndex];
+
+            // Panggil 1 walk-in (jika ada)
+            if ($walkIndex < $walkinQueue->count()) {
+                $callOrder->push($walkinQueue[$walkIndex]);
                 $walkIndex++;
-                $reservasiCount = 0; // Reset counter setelah walk-in
-            }
-            // Jika tidak ada walk-in lagi, panggil reservasi
-            elseif ($resIndex < $reservasis->count()) {
-                $callOrder[] = $reservasis[$resIndex];
-                $resIndex++;
-                $reservasiCount++;
-            }
-            else {
-                break; // Semua antrian sudah selesai
             }
         }
 
-        return collect($callOrder);
+        return $callOrder;
     }
 
     // Ambil antrian berikutnya sesuai skema
