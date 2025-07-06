@@ -17,7 +17,6 @@ class StatusAntrianSeeder extends Seeder
         $statuses = [
             ['id' => 1, 'name' => 'Waiting'],
             ['id' => 2, 'name' => 'Called'],
-            ['id' => 3, 'name' => 'On Going'],
             ['id' => 3, 'name' => 'Done'],
         ];
 
