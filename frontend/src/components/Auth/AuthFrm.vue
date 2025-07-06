@@ -10,7 +10,7 @@
                     <div class="flex flex-col px-8 py-8 gap-6 rounded-2xl" style="background-image: radial-gradient(circle at left top, var(--p-primary-400), var(--p-primary-700))">
                         <h1 class="text-2xl font-bold text-primary-50">{{ isLogin ? 'Sign In' : 'Sign Up' }}</h1>
 
-                        <div class="inline-flex flex-col gap-2" v-if="!isLogin">
+                        <!-- <div class="inline-flex flex-col gap-2" v-if="!isLogin">
                             <label for="username" class="text-primary-50 font-semibold">Username</label>
                             <InputText 
                                 id="username" 
@@ -24,7 +24,7 @@
                                 v-if="authStore.errors.username" 
                                 :message="authStore.errors.username"
                             />
-                        </div>
+                        </div> -->
 
                         <div class="inline-flex flex-col gap-2">
                             <label for="email" class="text-primary-50 font-semibold">Email</label>
@@ -85,7 +85,7 @@
                             />
                         </div>
 
-                        <div class="flex justify-center items-center mt-4">
+                        <!-- <div class="flex justify-center items-center mt-4">
                             <p v-if="isLogin">
                                 Don't have an account ? 
                                 <span class="text-primary-50 cursor-pointer hover:text-emerald-300" @click="handleSiginUpClick" >Sign Up</span>
@@ -94,7 +94,7 @@
                                 Already have an account ? 
                                 <span class="text-primary-50 cursor-pointer hover:text-emerald-300" @click="handleSiginInClick">Sign In</span>
                             </p>
-                        </div>
+                        </div> -->
                     </div>
                 </form>
             </template>
@@ -160,7 +160,7 @@
                 await registerStore(input);
             }
             
-            // Perbaikan: Cek apakah login/register berhasil
+            // Cek apakah login/register berhasil
             if (authStore.currentUser) {
                 clearForm();
                 clearErrors();
@@ -170,14 +170,14 @@
         }
     }
 
-    // Perbaikan: Watch untuk menutup dialog jika login berhasil
+    // Watch untuk menutup dialog jika login berhasil
     watch(() => authStore.currentUser, (newUser) => {
         if (newUser) {
             show.value = false;
         }
     });
 
-    // Perbaikan: Reset form saat dialog ditutup
+    // Reset form saat dialog ditutup
     watch(() => show.value, (newValue) => {
         if (!newValue) {
             clearForm();
