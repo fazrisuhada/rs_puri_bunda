@@ -52,6 +52,6 @@ export const useAmbilAntrianStore = defineStore('ambil-antrian', () => {
         errorMessage,
         openDialog,
         closeDialog,
-        simpanAntrian, // ✅ HARUS ADA DI SINI!
+        simpanAntrian,
     };
 });

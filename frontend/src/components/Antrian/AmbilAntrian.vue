@@ -40,9 +40,6 @@
 
 <script setup>
 import { ref } from 'vue'
-// import AutoComplete from 'primevue/autocomplete'
-// import Button from 'primevue/button'
-// import Dialog from 'primevue/dialog'
 
 // Pinia store
 import { storeToRefs } from 'pinia'

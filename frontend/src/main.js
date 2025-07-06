@@ -20,6 +20,9 @@ import Tooltip from 'primevue/tooltip'
 // pinia
 import { createPinia } from 'pinia';
 
+// Import Echo
+import './resources/js/echo';
+
 const app = createApp(App);
 const pinia = createPinia();
 

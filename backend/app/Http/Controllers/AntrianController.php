@@ -2,46 +2,60 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\AntrianUpdated;
 use App\Models\Antrian;
 use App\Models\AntrianStatus;
 use App\Models\Pelayanan;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class AntrianController extends Controller
 {
+    
     /**
-     * Ambil semua antrian
+     * Ambil list antrian
      */
-    public function index(Request $request)
+    public function getAntrianPasien(Request $request)
     {
-        $query = Antrian::with('status');
+        $tanggal = $request->get('tanggal', now()->format('Y-m-d'));
 
-        // Filter berdasarkan jenis antrian
-        if ($request->has('jenis')) {
-            $query->where('jenis_antrian', $request->jenis);
-        }
+        // Ambil semua antrian hari ini berdasarkan waktu kedatangan
+        $allAntrians = Antrian::whereDate('tanggal_waktu', $tanggal)
+            ->where('antrian_status_id', 1)
+            ->orderBy('tanggal_waktu', 'asc')
+            ->get();
 
-        // Filter berdasarkan status
-        if ($request->has('status_id')) {
-            $query->where('antrian_status_id', $request->status_id);
-        }
-
-        // Filter berdasarkan tanggal
-        if ($request->has('tanggal')) {
-            $query->whereDate('tanggal_waktu', $request->tanggal);
-        }
-
-        // Perbaikan urutan: berdasarkan waktu kedatangan (asc) bukan desc
-        $antrians = $query->orderBy('tanggal_waktu', 'asc')->get();
+        // Generate urutan pemanggilan
+        $callOrder = Antrian::generateCallOrder($tanggal);
 
         return response()->json([
             'success' => true,
-            'data' => $antrians
+            'message' => 'Simulasi urutan pemanggilan',
+            'data' => [
+                'urutan_pasien_masuk' => $allAntrians->map(function ($antrian, $index) {
+                    return [
+                        'urutan' => $index + 1,
+                        'nomor_antrian' => $antrian->nomor_antrian,
+                        'jenis_antrian' => $antrian->jenis_antrian,
+                        'waktu_kedatangan' => $antrian->tanggal_waktu
+                    ];
+                }),
+                'urutan_pemanggilan' => $callOrder->map(function ($antrian, $index) {
+                    return [
+                        'urutan' => $index + 1,
+                        'antrian_id' => $antrian->id,
+                        'nomor_antrian' => $antrian->nomor_antrian,
+                        'jenis_antrian' => $antrian->jenis_antrian,
+                        'waktu_kedatangan' => $antrian->tanggal_waktu,
+                        'antrian_status_id' => $antrian->antrian_status_id
+                    ];
+                })
+            ]
         ]);
     }
-
+    
     /**
-     * Buat antrian baru iya
+     * Buat antrian baru
      */
     public function store(Request $request)
     {
@@ -68,58 +82,7 @@ class AntrianController extends Controller
     }
 
     /**
-     * Ambil detail antrian
-     */
-    public function show($id)
-    {
-        $antrian = Antrian::with('status')->find($id);
-
-        if (!$antrian) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Antrian tidak ditemukan'
-            ], 404);
-        }
-
-        return response()->json([
-            'success' => true,
-            'data' => $antrian
-        ]);
-    }
-
-    /**
-     * Update status antrian
-     */
-    public function updateStatus(Request $request, $id)
-    {
-        $request->validate([
-            'status_id' => 'required|exists:status_antrian,id'
-        ]);
-
-        $antrian = Antrian::find($id);
-
-        if (!$antrian) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Antrian tidak ditemukan'
-            ], 404);
-        }
-
-        $antrian->update([
-            'antrian_status_id' => $request->status_id
-        ]);
-
-        $antrian->load('status');
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Status antrian berhasil diupdate',
-            'data' => $antrian
-        ]);
-    }
-
-    /**
-     * Panggil antrian berikutnya berdasarkan skema 2 Reservasi : 1 Walk-in iya
+     * Panggil antrian berikutnya berdasarkan skema 2 Reservasi : 1 Walk-in
      */
     public function panggilPasien(Request $request)
     {
@@ -134,6 +97,10 @@ class AntrianController extends Controller
 
         $nomorAntrian = $request->input('nomor_antrian');
 
+        $allAntrian = Antrian::select('id', 'nomor_antrian', 'antrian_status_id')
+            ->orderBy('id')
+            ->get();
+
         if ($nomorAntrian) {
             $nextAntrian = Antrian::where('nomor_antrian', $nomorAntrian)->first();
         } else {
@@ -143,7 +110,19 @@ class AntrianController extends Controller
         if (!$nextAntrian) {
             return response()->json([
                 'success' => false,
-                'message' => 'Antrian tidak ditemukan'
+                'message' => 'Antrian tidak ditemukan',
+                'debug' => [
+                    'searching_for' => $nomorAntrian,
+                    'type' => gettype($nomorAntrian),
+                    'all_data' => $allAntrian->toArray()
+                ]
+            ], 404);
+        }
+
+        if (!$nextAntrian) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Antrian tidak ditemukan',
             ], 404);
         }
 
@@ -169,7 +148,12 @@ class AntrianController extends Controller
             ]);
         }
 
+        // Load relasi yang dibutuhkan
         $nextAntrian->load(['status', 'pelayanan.staff']);
+        // dd($nextAntrian->pelayanan);
+
+        // Broadcast event
+        broadcast(new AntrianUpdated($nextAntrian));
 
         return response()->json([
             'success' => true,
@@ -177,9 +161,9 @@ class AntrianController extends Controller
             'data' => $nextAntrian
         ]);
     }
-    
+
     /**
-     * Panggil pasien selanjutnya iya
+     * Panggil pasien selanjutnya
      */
     public function panggilPasienSelanjutnya(Request $request)
     {
@@ -222,6 +206,9 @@ class AntrianController extends Controller
         // Load relasi status untuk response
         $nextAntrian->load('status');
 
+        // Broadcast event
+        broadcast(new AntrianUpdated($nextAntrian));
+
         return response()->json([
             'success' => true,
             'message' => 'Antrian berhasil dipanggil',
@@ -230,7 +217,7 @@ class AntrianController extends Controller
     }
 
     /**
-     * Selesaikan antrian (status called -> done) iya
+     * Selesaikan antrian (status called -> done)
      */
     public function selesaiDipanggil($antrian_id)
     {
@@ -255,183 +242,16 @@ class AntrianController extends Controller
             ]);
         }
 
+        // Load ulang relasi
         $antrian->load(['status', 'pelayanan.staff']);
+
+        // Broadcast event agar Display statusnya berubah
+        broadcast(new AntrianUpdated($antrian));
 
         return response()->json([
             'success' => true,
             'message' => 'Antrian berhasil diselesaikan',
             'data' => $antrian
-        ]);
-    }
-
-    /**
-     * Hapus antrian
-     */
-    public function destroy($id)
-    {
-        $antrian = Antrian::find($id);
-
-        if (!$antrian) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Antrian tidak ditemukan'
-            ], 404);
-        }
-
-        $antrian->delete();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Antrian berhasil dihapus'
-        ]);
-    }
-
-    /**
-     * Ambil statistik antrian hari ini
-     */
-    public function todayStats()
-    {
-        $today = now()->format('Y-m-d');
-
-        $stats = [
-            'total' => Antrian::whereDate('tanggal_waktu', $today)->count(),
-            'reservasi' => Antrian::whereDate('tanggal_waktu', $today)->where('jenis_antrian', 'reservasi')->count(),
-            'walk_in' => Antrian::whereDate('tanggal_waktu', $today)->where('jenis_antrian', 'walk-in')->count(),
-            'waiting' => Antrian::whereDate('tanggal_waktu', $today)->where('antrian_status_id', 1)->count(),
-            'called' => Antrian::whereDate('tanggal_waktu', $today)->where('antrian_status_id', 2)->count(),
-            'done' => Antrian::whereDate('tanggal_waktu', $today)->where('antrian_status_id', 3)->count(),
-        ];
-
-        return response()->json([
-            'success' => true,
-            'data' => $stats
-        ]);
-    }
-
-    /**
-     * Lihat urutan pemanggilan antrian berdasarkan skema 2:1
-     */
-    public function callOrder(Request $request)
-    {
-        $tanggal = $request->get('tanggal', now()->format('Y-m-d'));
-        $callOrder = Antrian::generateCallOrder($tanggal);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Urutan pemanggilan antrian (2 Reservasi : 1 Walk-in)',
-            'data' => $callOrder->map(function ($antrian, $index) {
-                return [
-                    'urutan' => $index + 1,
-                    'nomor_antrian' => $antrian->nomor_antrian,
-                    'jenis_antrian' => $antrian->jenis_antrian,
-                    'tanggal_waktu' => $antrian->tanggal_waktu,
-                    'status' => $antrian->status->name ?? 'Unknown'
-                ];
-            })
-        ]);
-    }
-
-    /**
-     * Lihat antrian berikutnya yang akan dipanggil
-     */
-    public function nextQueue(Request $request)
-    {
-        $tanggal = $request->get('tanggal', now()->format('Y-m-d'));
-        $nextAntrian = Antrian::getNextInQueue($tanggal);
-
-        if (!$nextAntrian) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Tidak ada antrian berikutnya'
-            ], 404);
-        }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Antrian berikutnya yang akan dipanggil',
-            'data' => [
-                'nomor_antrian' => $nextAntrian->nomor_antrian,
-                'jenis_antrian' => $nextAntrian->jenis_antrian,
-                'tanggal_waktu' => $nextAntrian->tanggal_waktu
-            ]
-        ]);
-    }
-
-    /**
-     * Lihat riwayat pelayanan
-     */
-    public function pelayananHistory(Request $request)
-    {
-        $query = Pelayanan::with(['antrian', 'staff']);
-
-        // Filter berdasarkan staff
-        if ($request->has('staff_id')) {
-            $query->where('staff_id', $request->staff_id);
-        }
-
-        // Filter berdasarkan tanggal
-        if ($request->has('tanggal')) {
-            $query->whereDate('waktu_mulai', $request->tanggal);
-        }
-
-        $pelayanan = $query->orderBy('waktu_mulai', 'desc')->get();
-
-        return response()->json([
-            'success' => true,
-            'data' => $pelayanan->map(function ($p) {
-                return [
-                    'id' => $p->id,
-                    'nomor_antrian' => $p->antrian->nomor_antrian,
-                    'jenis_antrian' => $p->antrian->jenis_antrian,
-                    'staff' => $p->staff->name,
-                    'waktu_mulai' => $p->waktu_mulai,
-                    'waktu_selesai' => $p->waktu_selesai,
-                    'durasi_menit' => $p->durasi,
-                    'catatan' => $p->catatan
-                ];
-            })
-        ]);
-    }
-
-    /**
-     * Simulasi untuk testing urutan pemanggilan iya
-     */
-    public function getAntrianPasien(Request $request)
-    {
-        $tanggal = $request->get('tanggal', now()->format('Y-m-d'));
-
-        // Ambil semua antrian hari ini berdasarkan waktu kedatangan
-        $allAntrians = Antrian::whereDate('tanggal_waktu', $tanggal)
-            ->where('antrian_status_id', 1)
-            ->orderBy('tanggal_waktu', 'asc')
-            ->get();
-
-        // Generate urutan pemanggilan
-        $callOrder = Antrian::generateCallOrder($tanggal);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Simulasi urutan pemanggilan',
-            'data' => [
-                'urutan_pasien_masuk' => $allAntrians->map(function ($antrian, $index) {
-                    return [
-                        'urutan' => $index + 1,
-                        'nomor_antrian' => $antrian->nomor_antrian,
-                        'jenis_antrian' => $antrian->jenis_antrian,
-                        'waktu_kedatangan' => $antrian->tanggal_waktu
-                    ];
-                }),
-                'urutan_pemanggilan' => $callOrder->map(function ($antrian, $index) {
-                    return [
-                        'urutan' => $index + 1,
-                        'antrian_id' => $antrian->id,
-                        'nomor_antrian' => $antrian->nomor_antrian,
-                        'jenis_antrian' => $antrian->jenis_antrian,
-                        'waktu_kedatangan' => $antrian->tanggal_waktu,
-                        'antrian_status_id' => $antrian->antrian_status_id
-                    ];
-                })
-            ]
         ]);
     }
 }

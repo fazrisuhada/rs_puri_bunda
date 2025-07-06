@@ -19,7 +19,7 @@
                     </div>
                 </div>
 
-                <!-- Voice Settings -->
+                <!-- Setting Suara -->
                 <div class="mt-6 p-4 bg-gray-50 rounded-xl">
                     <h3 class="text-lg font-semibold text-gray-700 mb-3">Pengaturan Suara</h3>
                     <div class="flex gap-4 items-center">
@@ -48,7 +48,7 @@
             </div>
 
             <div class="flex gap-6 mb-8">
-                <!-- Current Patient Being Called -->
+                <!-- Sedang Dipanggil -->
                 <div v-if="currentPatient"
                     class="w-1/2 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl shadow-xl p-8 mb-8 text-white">
                     <div class="flex items-center justify-between">
@@ -78,7 +78,7 @@
                     </div>
                 </div>
 
-                <!-- Next Patient -->
+                <!-- Pasien Selanjutnya -->
                 <div v-if="nextPatient"
                     class="w-1/2 bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl shadow-xl p-8 mb-8 text-white">
                     <div class="flex items-center justify-between">
@@ -102,7 +102,7 @@
                 </div>
             </div>
 
-            <!-- Queue List -->
+            <!-- List Antrian -->
             <div class="bg-white rounded-2xl shadow-xl p-8">
                 <div class="flex items-center justify-between mb-6">
                     <h2 class="text-2xl font-bold text-gray-800">
@@ -127,7 +127,7 @@
                     <p class="text-gray-500">Belum ada antrian yang perlu dipanggil</p>
                 </div>
 
-                <!-- Queue Table -->
+                <!-- Tabel Antrian -->
                 <div v-else class="overflow-hidden">
                     <DataTable :value="urutanPemanggilan" :rows="10" :paginator="true" class="!border-0">
                         <Column field="urutan" header="Urutan" class="!w-20">
@@ -252,7 +252,7 @@ const nextPatient = computed(() => {
     return waitingPatients.length > 0 ? waitingPatients[0] : null;
 });
 
-// Helper function untuk menentukan currentPatient
+// Helper
 const updateCurrentPatient = () => {
     // Cari pasien yang sedang dipanggil (antrian_status_id === 2)
     const calledPatients = urutanPemanggilan.value.filter(item => item.antrian_status_id === 2);
@@ -268,14 +268,14 @@ const updateCurrentPatient = () => {
 // Voice Methods
 const speak = (text) => {
     return new Promise((resolve, reject) => {
-        // Check if browser supports Speech Synthesis
+        // cek apakah browser mendukung text-to-speech
         if (!window.speechSynthesis) {
             showError('Error', 'Browser tidak mendukung text-to-speech');
             reject(new Error('Speech synthesis not supported'));
             return;
         }
 
-        // Cancel any ongoing speech
+        // batalkan pemutaran suara sebelumnya
         window.speechSynthesis.cancel();
 
         const utterance = new SpeechSynthesisUtterance(text);
@@ -302,7 +302,7 @@ const speak = (text) => {
             reject(event);
         };
 
-        // Speak the text
+        // Mulai pemutaran
         window.speechSynthesis.speak(utterance);
     });
 };
@@ -367,8 +367,6 @@ const panggilSelanjutnya = async () => {
 
         const patient = data.data;
 
-        // Solusi paling reliable: Refresh data dari server
-        // Ini memastikan data selalu sinkron dengan database
         await fetchData(false); // false = tidak tampilkan success message
 
         // Suara panggilan
@@ -389,7 +387,6 @@ const panggilUlang = async (patient) => {
         });
 
         if (data.success) {
-            // Refresh data dari server untuk memastikan sinkronisasi
             await fetchData(false); // false = tidak tampilkan success message
 
             // Tampilkan suara
@@ -452,8 +449,7 @@ const formatDateTime = (dateString) => {
 // Lifecycle
 onMounted(() => {
     fetchData();
-
-    // Check if browser supports Speech Synthesis
+    // Cek apakah browser mendukung text-to-speech
     if (!window.speechSynthesis) {
         showError('Warning', 'Browser tidak mendukung fitur text-to-speech');
     }

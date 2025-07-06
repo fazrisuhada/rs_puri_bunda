@@ -15,20 +15,22 @@ class UserSeeder extends Seeder
     {
         // Manager
         DB::table('users')->insert([
-            'id'       => 1,
-            'name'     => 'Fazri Suhada',
-            'email'    => 'fazri@mail.com',
-            'password' => Hash::make('rahasia'),
+            'id'         => 1,
+            'status'     => true,
+            'name'       => 'Fazri Suhada',
+            'email'      => 'fazri@mail.com',
+            'password'   => Hash::make('rahasia'),
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
         // Staff
         DB::table('users')->insert([
-            'id'       => 2,
-            'name'     => 'Jhon Doe',
-            'email'    => 'jhon@mail.com',
-            'password' => Hash::make('rahasia'),
+            'id'         => 2,
+            'status'     => true,
+            'name'       => 'Jhon Doe',
+            'email'      => 'jhon@mail.com',
+            'password'   => Hash::make('rahasia'),
             'created_at' => now(),
             'updated_at' => now(),
         ]);

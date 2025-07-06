@@ -87,7 +87,6 @@ const itemsSplitBtn = [
         label: 'Dashboard',
         class: '!text-xs',
         command: () => {
-            // Perbaikan: Ganti dengan console.log atau navigasi yang sesuai
             console.log('Dashboard clicked');
         }
     },
@@ -104,22 +103,8 @@ const itemsSplitBtn = [
 ];
 
 onMounted(() => {
-    // Perbaikan: Pastikan user dimuat dari localStorage saat component dimount
-    console.log('Header mounted, loading user from localStorage');
+    // Pastikan user dimuat dari localStorage saat component dimount
     authStore.loadUserFromLocalStorage();
-    
-    // Debug: Log current user setelah dimuat
-    console.log('Current user after load:', currentUser.value);
 });
 
 </script>
-
-<!-- <style scoped>
-:deep(.p-menubar) {
-    @apply rounded-none;
-    border-top-left-radius: 0 !important;
-    border-top-right-radius: 0 !important;
-    border-bottom-left-radius: 0 !important;
-    border-bottom-right-radius: 0 !important;
-}
-</style> -->

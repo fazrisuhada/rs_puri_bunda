@@ -17,7 +17,7 @@ export const useAuthenticationStore = defineStore('auth', () => {
         password: ''    // Error khusus untuk field password
     });
     
-    // Perbaikan: Initialize currentUser dengan null, bukan dari localStorage
+    // Initialize currentUser dengan null, bukan dari localStorage
     const currentUser = ref(null);
 
     const router = useRouter();
@@ -60,13 +60,13 @@ export const useAuthenticationStore = defineStore('auth', () => {
                 password: input.password
             });
 
-            // Perbaikan: Set currentUser dengan data user yang benar
+            // Set currentUser dengan data user yang benar
             currentUser.value = data.user;
             
-            // Perbaikan: Simpan user data yang benar ke localStorage
+            // Simpan user data yang benar ke localStorage
             localStorage.setItem('user', JSON.stringify(data.user));
             
-            // Perbaikan: Simpan token ke localStorage juga
+            // Simpan token ke localStorage juga
             localStorage.setItem('token', data.token);
 
             showSuccess('Success', 'Login berhasil');
@@ -129,13 +129,13 @@ export const useAuthenticationStore = defineStore('auth', () => {
                 password: input.password
             });
 
-            // Perbaikan: Set currentUser dengan data user yang benar
+            // Set currentUser dengan data user yang benar
             currentUser.value = data.user;
             
-            // Perbaikan: Simpan user data yang benar ke localStorage
+            // Simpan user data yang benar ke localStorage
             localStorage.setItem('user', JSON.stringify(data.user));
             
-            // Perbaikan: Simpan token ke localStorage juga
+            // Simpan token ke localStorage juga
             localStorage.setItem('token', data.token);
 
             showDialog.value = false;
@@ -159,7 +159,6 @@ export const useAuthenticationStore = defineStore('auth', () => {
                 const message = error.response?.data?.message || 'Invalid credentials';
                 setFieldError('general', message);
             } else {
-                // Error lainnya: Server error, network error, dll
                 const message = error.response?.data?.message || 'Internal server error';
                 setFieldError('general', message);
             }
@@ -170,7 +169,6 @@ export const useAuthenticationStore = defineStore('auth', () => {
 
     const logoutStore = async () => {
         try {
-            // Request logout ke server (token akan otomatis ditambahkan oleh interceptor)
             await apiClient.post('/auth/logout');
             
             // Bersihkan localStorage dan state
@@ -181,8 +179,7 @@ export const useAuthenticationStore = defineStore('auth', () => {
             showSuccess('Success', 'Logout berhasil');
             router.push({ name: 'ambil-antrian' });
         } catch (error) {
-            console.log('Logout error:', error);
-            // Tetap bersihkan localStorage meskipun request gagal
+            // console.log('Logout error:', error);
             localStorage.removeItem('user');
             localStorage.removeItem('token');
             currentUser.value = null;
@@ -190,7 +187,6 @@ export const useAuthenticationStore = defineStore('auth', () => {
         }
     };
 
-    // Perbaikan: Fungsi loadUserFromLocalStorage yang lebih robust
     const loadUserFromLocalStorage = () => {
         try {
             const userString = localStorage.getItem('user');

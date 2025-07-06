@@ -1,6 +1,7 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-blue-900 to-indigo-900 flex items-center justify-center p-4">
-    <div class="max-w-4xl w-full">
+  <div
+    class="min-h-screen bg-gradient-to-br bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4 rounded-2xl">
+    <div class="max-w-6xl w-full">
       <!-- Header -->
       <div class="text-center mb-8">
         <h1 class="text-4xl font-bold text-white mb-2">Display Antrian</h1>
@@ -14,12 +15,9 @@
       </div>
 
       <!-- Display Antrian yang Sedang Dipanggil -->
-      <div v-else-if="antrianDipanggil.length > 0" class="space-y-6">
-        <div 
-          v-for="antrian in antrianDipanggil" 
-          :key="antrian.antrian_id"
-          class="bg-white rounded-3xl shadow-2xl p-8 transform hover:scale-105 transition-all duration-300"
-        >
+      <div v-else-if="antrianDipanggil.length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div v-for="antrian in antrianDipanggil" :key="antrian.antrian_id"
+          class="bg-white rounded-3xl shadow-2xl p-8 transform hover:scale-105 transition-all duration-300">
           <div class="flex items-center justify-between">
             <!-- Nomor Antrian -->
             <div class="text-center">
@@ -33,10 +31,8 @@
             <div class="text-center">
               <p class="text-gray-600 text-lg mb-2">Jenis Antrian</p>
               <div class="flex flex-col items-center">
-                <div 
-                  class="w-20 h-20 rounded-full flex items-center justify-center text-white text-2xl font-bold mb-2"
-                  :class="getJenisAntrianClass(antrian.jenis_antrian)"
-                >
+                <div class="w-20 h-20 rounded-full flex items-center justify-center text-white text-2xl font-bold mb-2"
+                  :class="getJenisAntrianClass(antrian.jenis_antrian)">
                   {{ getJenisAntrianLabel(antrian.jenis_antrian) }}
                 </div>
                 <span class="text-gray-700 font-semibold capitalize">{{ antrian.jenis_antrian }}</span>
@@ -45,15 +41,15 @@
 
             <!-- Staff/Loket -->
             <div class="text-center">
-              <p class="text-gray-600 text-lg mb-2">Loket</p>
+              <p class="text-gray-600 text-lg mb-2">Petugas</p>
               <div class="bg-gray-100 rounded-2xl px-6 py-4">
                 <div class="flex items-center justify-center mb-2">
                   <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
                     <i class="pi pi-user text-white text-xl"></i>
                   </div>
                 </div>
-                <p class="text-gray-800 font-semibold">{{ antrian.staff_name || 'Loket 1' }}</p>
-                <p class="text-gray-600 text-sm">{{ antrian.loket_name || 'Pendaftaran' }}</p>
+                <p class="text-gray-800 font-semibold">{{ getStaffName(antrian) }}</p>
+                <p class="text-gray-600 text-sm">{{ antrian.loket_name || 'Loket Pendaftaran' }}</p>
               </div>
             </div>
           </div>
@@ -73,14 +69,6 @@
         <h3 class="text-2xl font-bold text-white mb-2">Tidak Ada Antrian yang Dipanggil</h3>
         <p class="text-blue-200">Menunggu antrian selanjutnya...</p>
       </div>
-
-      <!-- Auto Refresh Info -->
-      <div class="mt-8 text-center">
-        <p class="text-blue-200 text-sm">
-          <i class="pi pi-refresh mr-2"></i>
-          Pembaruan otomatis setiap {{ refreshInterval / 1000 }} detik
-        </p>
-      </div>
     </div>
   </div>
 </template>
@@ -92,26 +80,28 @@ import apiClient from '@/api/axios'
 // State
 const isLoading = ref(false)
 const antrianDipanggil = ref([])
-const refreshInterval = ref(100000) // 5 detik
 let intervalId = null
 
 // Methods
 const fetchAntrianDipanggil = async () => {
   try {
     isLoading.value = true
-    
+
     const { data } = await apiClient.get('/antrian')
-    
+
     if (data.success) {
       // Filter antrian yang sedang dipanggil (status_id = 2)
-      antrianDipanggil.value = data.data.urutan_pemanggilan.filter(
+      const filteredAntrian = data.data.urutan_pemanggilan.filter(
         antrian => antrian.antrian_status_id === 2
-      ).map(antrian => ({
-        ...antrian,
-        waktu_dipanggil: antrian.waktu_dipanggil || new Date().toISOString(),
-        staff_name: antrian.staff_name || 'Petugas',
-        loket_name: 'Loket Pendaftaran'
-      }))
+      )
+      
+      antrianDipanggil.value = filteredAntrian.map(antrian => {        
+        return {
+          ...antrian,
+          waktu_dipanggil: antrian.waktu_dipanggil || new Date().toISOString(),
+          loket_name: 'Loket Pendaftaran'
+        }
+      })
     }
   } catch (error) {
     console.error('Error fetching antrian:', error)
@@ -120,13 +110,18 @@ const fetchAntrianDipanggil = async () => {
   }
 }
 
+// Helper function untuk mendapatkan nama staff
+const getStaffName = (antrian) => {
+  return antrian.staff_name || 'Petugas';
+}
+
 const getJenisAntrianLabel = (jenis) => {
   return jenis === 'reservasi' ? 'R' : 'W'
 }
 
 const getJenisAntrianClass = (jenis) => {
-  return jenis === 'reservasi' 
-    ? 'bg-gradient-to-r from-green-500 to-emerald-600' 
+  return jenis === 'reservasi'
+    ? 'bg-gradient-to-r from-green-500 to-emerald-600'
     : 'bg-gradient-to-r from-orange-500 to-red-500'
 }
 
@@ -142,12 +137,6 @@ const formatDateTime = (dateString) => {
   })
 }
 
-const startAutoRefresh = () => {
-  intervalId = setInterval(() => {
-    fetchAntrianDipanggil()
-  }, refreshInterval.value)
-}
-
 const stopAutoRefresh = () => {
   if (intervalId) {
     clearInterval(intervalId)
@@ -155,14 +144,60 @@ const stopAutoRefresh = () => {
   }
 }
 
+// Setup WebSocket Listener
+const setupWebSocketListener = () => {
+  if (window.Echo) {
+    window.Echo.channel('antrian-channel')
+      .listen('.antrian.updated', (data) => {
+        console.log('Antrian updated via WebSocket:', data)
+
+        const updatedAntrian = data.antrian
+
+        // Jika status = 2 (dipanggil), tambahkan atau update ke display
+        if (updatedAntrian.antrian_status_id === 2) {
+          // tampilkan di layar
+          const existingIndex = antrianDipanggil.value.findIndex(
+            a => a.id === updatedAntrian.id
+          )
+
+          const formattedAntrian = {
+            ...updatedAntrian,
+            waktu_dipanggil: updatedAntrian.waktu_dipanggil || new Date().toISOString(),
+            loket_name: updatedAntrian.loket_name || 'Loket Pendaftaran',
+            staff_name: updatedAntrian.staff_name || 'Petugas'
+          }
+
+          if (existingIndex !== -1) {
+            antrianDipanggil.value[existingIndex] = formattedAntrian
+          } else {
+            antrianDipanggil.value.push(formattedAntrian)
+          }
+
+        } else {
+          // selain status 2 (misalnya status 3 = selesai), hapus dari tampilan
+          antrianDipanggil.value = antrianDipanggil.value.filter(
+            a => a.id !== updatedAntrian.id
+          )
+        }
+      })
+  }
+}
+
+const cleanup = () => {
+  stopAutoRefresh()
+  if (window.Echo) {
+    window.Echo.leaveChannel('antrian-channel')
+  }
+}
+
 // Lifecycle
 onMounted(() => {
   fetchAntrianDipanggil()
-  startAutoRefresh()
+  setupWebSocketListener()
 })
 
 onUnmounted(() => {
-  stopAutoRefresh()
+  cleanup()
 })
 </script>
 

@@ -204,7 +204,6 @@ const fetchDashboardData = async () => {
     loading.value = true
     error.value = null
     
-    // Simulate API call - replace with your actual API endpoint
     const response = await apiClient.get('/dashboard-monitoring')
     const result = response.data
 

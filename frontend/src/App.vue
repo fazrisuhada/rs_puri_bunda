@@ -36,7 +36,6 @@ onMounted(() => {
   display: none !important;
 }
 
-/* Alternatif lain */
 :deep(.p-toast-message-error .p-toast-icon) {
   display: none !important;
 }

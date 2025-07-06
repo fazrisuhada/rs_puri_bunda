@@ -22,26 +22,10 @@ class Antrian extends Model
         'tanggal_waktu' => 'datetime',
     ];
 
-    // Relasi dengan antrian_statuses
+    // Relasi dengan status antrian
     public function status()
     {
         return $this->belongsTo(StatusAntrian::class, 'antrian_status_id');
-    }
-    
-    // Scope untuk filter berdasarkan status
-    public function scopeWaiting($query)
-    {
-        return $query->where('antrian_status_id', 1);
-    }
-
-    public function scopeCalled($query)
-    {
-        return $query->where('antrian_status_id', 2);
-    }
-
-    public function scopeDone($query)
-    {
-        return $query->where('antrian_status_id', 3);
     }
 
     // Relasi dengan pelayanan
@@ -74,17 +58,6 @@ class Antrian extends Model
         return $prefix . str_pad($newNum, 3, '0', STR_PAD_LEFT);
     }
 
-    // Scope untuk filter berdasarkan jenis
-    public function scopeReservasi($query)
-    {
-        return $query->where('jenis_antrian', 'reservasi');
-    }
-
-    public function scopeWalkIn($query)
-    {
-        return $query->where('jenis_antrian', 'walk-in');
-    }
-
     // Generate urutan pemanggilan dengan skema 2 Reservasi : 1 Walk-in
     public static function generateCallOrder($tanggal = null)
     {
@@ -108,7 +81,7 @@ class Antrian extends Model
         $walkIndex = 0;
         $reservasiCount = 0; // Counter untuk melacak berapa reservasi berturut-turut yang sudah dipanggil
 
-        // Algoritma sederhana: terus loop sampai semua antrian selesai
+        // loop sampai semua antrian selesai
         while ($resIndex < $reservasis->count() || $walkIndex < $walkins->count()) {
             // Jika sudah 2 reservasi berturut-turut, wajib panggil walk-in (jika ada)
             if ($reservasiCount >= 2 && $walkIndex < $walkins->count()) {
