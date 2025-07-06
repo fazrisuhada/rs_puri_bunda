@@ -2,8 +2,10 @@
 
 use App\Http\Controllers\AntrianController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\DashboardController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use SebastianBergmann\CodeCoverage\Report\Html\Dashboard;
 
 /*
 |--------------------------------------------------------------------------
@@ -20,6 +22,7 @@ Route::post('/auth/register', [AuthController::class, 'register']);
 Route::post('/auth/login', [AuthController::class, 'login']);
 Route::post('/auth/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
 
+Route::get('/dashboard-monitoring', [DashboardController::class, 'index']);
 Route::post('/antrian', [AntrianController::class, 'store']);
 
 Route::middleware('auth:sanctum')->prefix('antrian')->group(function () {

@@ -58,6 +58,13 @@ const items = computed(() => {
             command: () => {
                 window.open('/display-antrian', '_blank');
             }
+        },
+        {
+            label: 'Dashboard Monitoring',
+            icon: 'pi pi-objects-column',
+            command: () => {
+                router.push({ name: 'dashboard-monitoring' });
+            }
         }
     ];
 
