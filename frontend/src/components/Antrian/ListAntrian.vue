@@ -14,7 +14,7 @@
                     <div class="flex gap-3">
                         <Button label="Refresh Data" icon="pi pi-refresh" @click="fetchData" :loading="isLoading"
                             severity="secondary" class="!px-6 !py-3" />
-                        <Button label="Panggil Selanjutnya" icon="pi pi-volume-up" @click="panggilSelanjutnya"
+                        <Button label="Antrian Selanjutnya" icon="pi pi-volume-up" @click="panggilSelanjutnya"
                             :disabled="!nextPatient || isPlaying" :loading="isPlaying" class="!px-6 !py-3" />
                     </div>
                 </div>
